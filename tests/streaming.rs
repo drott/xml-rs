@@ -116,3 +116,19 @@ fn stylesheet_pi_escaping() {
     let pi = it.next();
     assert!(matches!(pi, Some(Ok(XmlEvent::ProcessingInstruction { ref name, ref data })) if name == "xml-stylesheet" && data.as_deref() == Some(r#"type="text/css" href="../resources/test.css" "#)), "{pi:#?}");
 }
+
+
+#[test]
+fn no_empty_namespace_in_root_element() {
+    let source = "<root xmlns:foo=\"http://www.example.com\" attr=\"test2\" foo:attr=\"test\" />";
+
+    let buf = Cursor::new(source);
+    let reader = EventReader::new(buf);
+
+    let mut it = reader.into_iter();
+
+    assert_match!(it.next(), Some(Ok(XmlEvent::StartDocument { .. })));
+    let root_element = it.next();
+    println!("{:?}", root_element);
+    assert_match!(root_element, Some(Ok(XmlEvent::StartElement { name, attributes: _, namespace })) if name.local_name == "root" && namespace.iter().len() == 3);
+}
