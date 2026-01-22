@@ -1,5 +1,6 @@
 #![forbid(unsafe_code)]
 
+use std::time::{Duration, Instant};
 use std::io::{Cursor, Write};
 
 use xml::reader::{ParserConfig, XmlEvent};
@@ -227,6 +228,37 @@ fn doctype_name_only_with_space() {
     assert_eq!(d.name(), "svg");
     assert_eq!(d.public_id(), None);
     assert_eq!(d.system_id(), None);
+}
+
+#[test]
+#[ignore] // Run performance tests explicitly
+fn blink_perf_benchmark() {
+    // Modeled after Blink's XML performance benchmark
+    // https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/perf_tests/parser/xml-parser.html?q=xml-parser.html
+    //
+    // Run with:
+    // cargo test --profile profiling blink_perf_benchmark -- --include-ignored --nocapture
+    let mut xml = String::new();
+    xml.push_str("<root>");
+    for _ in 0..0x7FFF {
+        xml.push_str(r#"<item attribute1="value1" attribute2="value2" attribute3="value3" attribute4="value4" attribute5="value5" />"#);
+    }
+    xml.push_str("</root>");
+    let xml_data = xml.as_bytes();
+
+    let mut count = 0;
+    let duration = Duration::from_secs(10);
+    let start = Instant::now();
+
+    while start.elapsed() < duration {
+        let reader = EventReader::new(xml_data);
+        // Consume the iterator to actually parse the document
+        for _ in reader.into_iter() {}
+        count += 1;
+    }
+
+    let elapsed_secs = start.elapsed().as_secs_f64();
+    println!("\nBlink perf benchmark: {:.2} runs per second", count as f64 / elapsed_secs);
 }
 
 #[test]
