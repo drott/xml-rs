@@ -90,7 +90,7 @@ fn run_suite_with_config(suite_rel_path: &str, parser_config: ParserConfig) {
 
                 parsed += 1;
             },
-            XmlEvent::StartElement { name, attributes, namespace: _ } if name.local_name == "TEST" => {
+            XmlEvent::StartElement { name, attributes, .. } if name.local_name == "TEST" => {
                 desc.clear();
                 attr = attributes.into_iter().map(|a| (a.name.local_name, a.value)).collect();
             },

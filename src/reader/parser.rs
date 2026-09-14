@@ -747,11 +747,13 @@ impl PullParser {
         } else {
             self.est.push(name.clone());
         }
+        let declared_namespaces = self.nst.peek().clone();
         let namespace = self.nst.squash();
         self.into_state_emit(State::OutsideTag, Ok(XmlEvent::StartElement {
             name,
             attributes,
-            namespace
+            namespace,
+            declared_namespaces,
         }))
     }
 
@@ -856,7 +858,7 @@ mod tests {
         "#);
 
         expect_event!(r, p, Ok(XmlEvent::StartDocument { .. }));
-        expect_event!(r, p, Ok(XmlEvent::StartElement { ref name, ref attributes, ref namespace }) =>
+        expect_event!(r, p, Ok(XmlEvent::StartElement { ref name, ref attributes, ref namespace, .. }) =>
             *name == OwnedName::local("a") &&
              attributes.len() == 1 &&
              attributes[0] == OwnedAttribute::new(OwnedName::local("attr"), "zzz;zzz") &&

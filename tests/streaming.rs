@@ -94,7 +94,7 @@ fn late_ns_binding() {
     let mut it = reader.into_iter();
 
     assert_match!(it.next(), Some(Ok(XmlEvent::StartDocument { .. })));
-    let XmlEvent::StartElement { name, attributes, namespace } = it.next().unwrap().unwrap() else { panic!() };
+    let XmlEvent::StartElement { name, attributes, namespace, .. } = it.next().unwrap().unwrap() else { panic!() };
     assert_eq!("urn:x-test:U+00E2", namespace.0["â"]);
     assert!(attributes.is_empty());
     assert_eq!(("http://www.w3.org/1999/xhtml", "html"), name);
@@ -136,8 +136,8 @@ fn unicode_attribute() {
     let mut it = reader.into_iter();
 
     assert_match!(it.next(), Some(Ok(XmlEvent::StartDocument { .. })));
-    assert_match!(it.next(), Some(Ok(XmlEvent::StartElement { name, attributes: _ , namespace: _ })) if name.local_name == "xml");
-    assert_match!(it.next(), Some(Ok(XmlEvent::StartElement { name, attributes , namespace: _ }))
+    assert_match!(it.next(), Some(Ok(XmlEvent::StartElement { name, .. })) if name.local_name == "xml");
+    assert_match!(it.next(), Some(Ok(XmlEvent::StartElement { name, attributes, .. }))
         if name.prefix == Some(String::from("b"))
         && name.local_name == "t"
         && attributes[0].name.prefix == Some(String::from("â"))

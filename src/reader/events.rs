@@ -59,6 +59,7 @@ pub enum XmlEvent {
     ///
     /// This event is emitted after parsing opening tags or after parsing bodiless tags. In the
     /// latter case `EndElement` event immediately follows.
+    #[non_exhaustive]
     StartElement {
         /// Qualified name of the element.
         name: OwnedName,
@@ -70,6 +71,17 @@ pub enum XmlEvent {
 
         /// Contents of the namespace mapping at this point of the document.
         namespace: Namespace,
+
+        /// Namespace declarations written directly on this element.
+        ///
+        /// Unlike `namespace`, which contains the cumulative flattened mapping of all
+        /// namespaces in scope at this point of the document, `declared_namespaces`
+        /// contains only the `xmlns` and `xmlns:*` declarations defined on this
+        /// specific element (including any DTD `ATTLIST` default namespace declarations).
+        ///
+        /// A default namespace undeclaration (`xmlns=""`) is represented as the mapping
+        /// `"" -> ""` in this map.
+        declared_namespaces: Namespace,
     },
 
     /// Denotes an end of an XML element.
@@ -170,7 +182,7 @@ impl fmt::Debug for XmlEvent {
                     Some(data) => format!(", {data}"),
                     None       => String::new()
                 }),
-            Self::StartElement { name, attributes, namespace: Namespace(namespace) } =>
+            Self::StartElement { name, attributes, namespace: Namespace(namespace), .. } =>
                 write!(f, "StartElement({}, {:?}{})", name, namespace, if attributes.is_empty() {
                     String::new()
                 } else {
@@ -251,7 +263,7 @@ impl XmlEvent {
                     name,
                     data: data.as_ref().map(|s| &**s)
                 }),
-            Self::StartElement { name, attributes, namespace } =>
+            Self::StartElement { name, attributes, namespace, .. } =>
                 Some(crate::writer::events::XmlEvent::StartElement {
                     name: name.borrow(),
                     attributes: attributes.iter().map(|a| a.borrow()).collect(),

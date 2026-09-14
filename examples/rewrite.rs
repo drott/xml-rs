@@ -29,7 +29,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         match reader_event {
             xml::reader::XmlEvent::EndDocument => break,
-            xml::reader::XmlEvent::StartElement { name, mut attributes, namespace } => {
+            xml::reader::XmlEvent::StartElement { name, mut attributes, namespace, .. } => {
                 let event = xml::writer::XmlEvent::StartElement {
                     name: name.borrow(),
                     namespace: namespace.borrow(),

@@ -1203,3 +1203,30 @@ fn test_internal_dtd_attlist_modes_required_implied_fixed_default() {
     assert!(root_checked);
     assert_eq!(elements_checked, 3);
 }
+
+/// Returns the declared namespace mapping reported for the first `<req>` element.
+fn req_declared_namespaces(xml: &str) -> Vec<(String, String)> {
+    for event in EventReader::from_str(xml) {
+        if let XmlEvent::StartElement { name, declared_namespaces, .. } = event.unwrap() {
+            if name.local_name == "req" {
+                return declared_namespaces.iter().map(|(p, u)| (p.to_owned(), u.to_owned())).collect();
+            }
+        }
+    }
+    panic!("<req> not found");
+}
+
+#[test]
+fn xmlns_undeclaration_is_observable() {
+    // Only prefixed namespaces are in scope; `<req>` undeclares the default one.
+    let with = r#"<soap:Envelope xmlns:soap="urn:soap"><soap:Body><req xmlns=""><id>42</id></req></soap:Body></soap:Envelope>"#;
+    // Identical document, minus the `xmlns=""`.
+    let without = r#"<soap:Envelope xmlns:soap="urn:soap"><soap:Body><req><id>42</id></req></soap:Body></soap:Envelope>"#;
+
+    assert_ne!(
+        req_declared_namespaces(with),
+        req_declared_namespaces(without),
+        "`xmlns=\"\"` is invisible to API clients"
+    );
+}
+
